@@ -1,0 +1,35 @@
+[project]
+name = "lms-polinema-mcp"
+version = "0.1.0"
+description = "MCP server for LMS Polinema (Moodle) — reference implementation for academic LMS integration with AI agents"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Hafidz Rafi Rabbani", email = "mohammadhafidzrafirabbani99@gmail.com" }
+]
+requires-python = ">=3.11"
+keywords = ["mcp", "lms", "moodle", "polinema", "ai-agent"]
+dependencies = [
+    "beautifulsoup4[lxml]>=4.15.0",
+    "httpx>=0.28.1",
+    "mcp>=2.2.0",
+    "playwright>=1.62.0",
+    "pydantic>=2.13.5",
+]
+
+[project.scripts]
+lms-polinema-mcp = "lms_polinema_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/hafidzrafi/lms-polinema-mcp"
+Repository = "https://github.com/hafidzrafi/lms-polinema-mcp"
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
+

@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Session files — NEVER commit these
+~/.lms_polinema/
+moodle_token.json
+spada_session.json
