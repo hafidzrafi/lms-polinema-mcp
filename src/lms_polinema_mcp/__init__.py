@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from lms-polinema-mcp!")
+"""LMS Polinema MCP Server package."""
+
+__version__ = "2.0.0"

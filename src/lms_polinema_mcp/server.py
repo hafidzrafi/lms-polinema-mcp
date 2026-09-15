@@ -1,81 +1,137 @@
-"""LMS Polinema MCP Server
+"""LMS Polinema MCP Server implementation."""
 
-Menyediakan tools resmi untuk AI Agents dalam mengakses:
-- Daftar mata kuliah aktif semester ini di Polinema
-- Seluruh tugas (assignments), status pengumpulan, dan tenggat waktu (due date)
-- Detail instruksi dan file attachment tugas
-- Modul dan materi perkuliahan (jobsheet, slide, modul)
-"""
+import logging
 
-from typing import Any, Optional
 from mcp.server.mcpserver import MCPServer
 
-from lms_polinema_mcp.api.moodle import LMSClient
+from lms_polinema_mcp.auth.credentials import CredentialStore
+from lms_polinema_mcp.auth.refresh import SessionRefresher
 from lms_polinema_mcp.auth.session import SessionManager
+from lms_polinema_mcp.cache import TTLCache
+from lms_polinema_mcp.config import settings
+from lms_polinema_mcp.exceptions import CredentialsNotFoundError, SessionExpiredError
+from lms_polinema_mcp.models.assignment import (
+    AssignmentDetail,
+    AssignmentSummary,
+    DeadlineItem,
+)
+from lms_polinema_mcp.models.course import Course
+from lms_polinema_mcp.models.material import CourseMaterial
+from lms_polinema_mcp.services.http import create_moodle_client, create_spada_client
+from lms_polinema_mcp.services.moodle import MoodleScraper
+from lms_polinema_mcp.services.spada import SpadaScraper
+
+logger = logging.getLogger(__name__)
 
 mcp = MCPServer("lms-polinema-mcp")
+
 _session_manager = SessionManager()
+_credential_store = CredentialStore()
+_refresher = SessionRefresher(_credential_store, _session_manager)
+_course_cache: TTLCache[list[Course]] = TTLCache(ttl_seconds=settings.course_cache_ttl_seconds)
 
 
-def _get_client() -> LMSClient:
-    session = _session_manager.get_valid_session()
-    if not session:
+def _get_authenticated_sessions() -> tuple[str, str]:
+    """
+    Return active (moodle_session, polimaspada) cookies, performing auto-refresh if necessary.
+
+    Raises:
+        RuntimeError: If authentication cannot be established or refreshed.
+    """
+    try:
+        session = _session_manager.get_valid_session()
+        spada_data = _session_manager.load_spada() or {}
+        polimaspada = spada_data.get(settings.spada_cookie_name, "")
+        return session["MoodleSession"], polimaspada
+    except SessionExpiredError:
+        logger.info("Session expired or missing. Checking stored credentials for auto-refresh.")
+
+    if not _credential_store.exists():
         raise RuntimeError(
-            "❌ Sesi LMS Polinema belum terautentikasi atau sudah kedaluwarsa.\n"
-            "Jalankan: uv run python auth.py di direktori lms-polinema-mcp"
+            "LMS session expired and no stored credentials found. "
+            "Please run 'lms-polinema-auth' to configure."
         )
-    return LMSClient(moodle_session=session["MoodleSession"])
+
+    try:
+        _refresher.refresh()
+        session = _session_manager.get_valid_session()
+        spada_data = _session_manager.load_spada() or {}
+        polimaspada = spada_data.get(settings.spada_cookie_name, "")
+        return session["MoodleSession"], polimaspada
+    except (CredentialsNotFoundError, Exception) as exc:
+        raise RuntimeError(
+            f"Failed to automatically refresh LMS session: {exc}. "
+            "Please run 'lms-polinema-auth' to re-authenticate."
+        ) from exc
 
 
 @mcp.tool()
-def lms_list_courses() -> list[dict[str, Any]]:
-    """Dapatkan daftar seluruh mata kuliah aktif semester ini di Polinema beserta Moodle course ID dan URL."""
-    client = _get_client()
-    return client.get_enrolled_courses()
+async def lms_list_courses() -> list[Course]:
+    """Return all enrolled academic courses for the current semester from SPADA portal."""
+    cached = _course_cache.get("enrolled")
+    if cached is not None:
+        return cached
+
+    moodle_session, polimaspada = _get_authenticated_sessions()
+    async with create_spada_client(polimaspada) as client:
+        scraper = SpadaScraper(client)
+        try:
+            courses = await scraper.get_enrolled_courses()
+        except SessionExpiredError:
+            # SPADA cookie expired while Moodle was valid; trigger refresh and retry once
+            _session_manager.invalidate_cache()
+            moodle_session, polimaspada = _get_authenticated_sessions()
+            async with create_spada_client(polimaspada) as retry_client:
+                retry_scraper = SpadaScraper(retry_client)
+                courses = await retry_scraper.get_enrolled_courses()
+
+    _course_cache.set("enrolled", courses)
+    return courses
 
 
 @mcp.tool()
-def lms_list_assignments(course_id: Optional[int] = None) -> list[dict[str, Any]]:
-    """Daftar seluruh tugas kuliah dari semua mata kuliah aktif, atau difilter berdasarkan course_id."""
-    client = _get_client()
-    return client.get_all_assignments(course_id_filter=course_id)
+async def lms_list_assignments(course_id: int | None = None) -> list[AssignmentSummary]:
+    """Return all active assignments, optionally filtered by specific course_id."""
+    courses = await lms_list_courses()
+    moodle_session, _ = _get_authenticated_sessions()
+
+    async with create_moodle_client(moodle_session) as client:
+        scraper = MoodleScraper(client)
+        return await scraper.get_all_assignments(courses, course_id_filter=course_id)
 
 
 @mcp.tool()
-def lms_get_assignment_detail(assignment_id: int) -> dict[str, Any]:
-    """Ambil rincian instruksi tugas, file attachment, batas waktu (due date), time remaining, dan status submission."""
-    client = _get_client()
-    return client.get_assignment_detail(assignment_id)
+async def lms_get_assignment_detail(assignment_id: int) -> AssignmentDetail:
+    """Return complete assignment details including instructions, attachments, and submission status."""
+    moodle_session, _ = _get_authenticated_sessions()
+    async with create_moodle_client(moodle_session) as client:
+        scraper = MoodleScraper(client)
+        return await scraper.get_assignment_detail(assignment_id)
 
 
 @mcp.tool()
-def lms_list_materials(course_id: int) -> list[dict[str, Any]]:
-    """Dapatkan seluruh file materi, jobsheet, dan slide pertemuan untuk suatu mata kuliah di LMS."""
-    client = _get_client()
-    modules = client.get_course_modules(course_id)
-    return [m for m in modules if m["type"] != "assign"]
+async def lms_list_materials(course_id: int) -> list[CourseMaterial]:
+    """Return all educational material items (slides, documents, folders) for a specific course."""
+    moodle_session, _ = _get_authenticated_sessions()
+    async with create_moodle_client(moodle_session) as client:
+        scraper = MoodleScraper(client)
+        modules = await scraper.get_course_modules(course_id)
+        return [m for m in modules if isinstance(m, CourseMaterial)]
 
 
 @mcp.tool()
-def lms_check_deadlines() -> list[dict[str, Any]]:
-    """Periksa ringkasan tenggat waktu (due dates) tugas-tugas aktif dan sisa waktu pengumpulan dari semua mata kuliah."""
-    client = _get_client()
-    all_assigns = client.get_all_assignments()
-    deadlines = []
-    for a in all_assigns:
-        detail = client.get_assignment_detail(a["assignment_id"])
-        deadlines.append({
-            "course": a["course"],
-            "task": a["title"],
-            "due_date": detail.get("due_date"),
-            "time_remaining": detail.get("time_remaining"),
-            "submission_status": detail.get("submission_status"),
-            "url": a["url"],
-        })
-    return deadlines
+async def lms_check_deadlines() -> list[DeadlineItem]:
+    """Return deadline summary for all active assignments across all enrolled courses."""
+    courses = await lms_list_courses()
+    moodle_session, _ = _get_authenticated_sessions()
+
+    async with create_moodle_client(moodle_session) as client:
+        scraper = MoodleScraper(client)
+        return await scraper.get_deadlines(courses)
 
 
-def main():
+def main() -> None:
+    """Start MCP stdio server transport."""
     mcp.run(transport="stdio")
 
 
