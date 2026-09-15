@@ -1,15 +1,51 @@
-.env
+# Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Build artifacts
 *.egg-info/
 dist/
 build/
-.DS_Store
+*.whl
 
-# Session files — NEVER commit these
-~/.lms_polinema/
-moodle_token.json
+# uv
+.python-version
+
+# Environment files — never commit real credentials
+.env
+.env.local
+.env.*.local
+
+# Session and credential files — SECURITY: these contain live auth cookies
+moodle_session.json
 spada_session.json
+credentials.json
+*.session.json
+*.token.json
+moodle_token.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# JetBrains / VS Code
+.idea/
+.vscode/
+*.iml
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Temporary debug files
 ajax_slc.html
 slc_page.html

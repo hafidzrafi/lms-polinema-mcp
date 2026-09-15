@@ -4,6 +4,7 @@
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MCP: 2.x](https://img.shields.io/badge/MCP-2.x-green.svg)](https://modelcontextprotocol.io)
 [![OS: Cross--Platform](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-brightgreen.svg)](#cross-platform-support)
+[![CI](https://github.com/hafidzrafi/lms-polinema-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/hafidzrafi/lms-polinema-mcp/actions/workflows/ci.yml)
 
 A high-performance Model Context Protocol (MCP) server that provides AI agents (Antigravity CLI, Claude Desktop, Cursor, VS Code) real-time access to **LMS Polinema** (`lmsslc.polinema.ac.id` & `slc.polinema.ac.id/spada`).
 
@@ -74,7 +75,7 @@ Run the setup script to store your credentials and establish your initial sessio
 ```bash
 uv run python auth.py
 ```
-Your credentials are encrypted/stored with restricted user-only file permissions (`0600`) at `~/.lms_polinema/credentials.json`. When sessions expire, the server re-authenticates automatically in the background.
+Your credentials are stored as JSON with user-only file permissions (`0600`) at `~/.lms_polinema/credentials.json`. When sessions expire, the server re-authenticates automatically in the background.
 
 ---
 

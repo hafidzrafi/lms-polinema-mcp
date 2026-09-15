@@ -8,7 +8,14 @@ authors = [
     { name = "Hafidz Rafi Rabbani", email = "mohammadhafidzrafirabbani99@gmail.com" }
 ]
 requires-python = ">=3.11"
-keywords = ["mcp", "lms", "moodle", "ai-agent", "campus", "education"]
+keywords = ["mcp", "lms", "moodle", "ai-agent", "campus", "education", "polinema"]
+
+[project.urls]
+Homepage = "https://github.com/hafidzrafi/lms-polinema-mcp"
+Repository = "https://github.com/hafidzrafi/lms-polinema-mcp"
+Issues = "https://github.com/hafidzrafi/lms-polinema-mcp/issues"
+Changelog = "https://github.com/hafidzrafi/lms-polinema-mcp/blob/main/CHANGELOG.md"
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
