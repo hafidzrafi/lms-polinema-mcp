@@ -11,3 +11,5 @@ build/
 ~/.lms_polinema/
 moodle_token.json
 spada_session.json
+ajax_slc.html
+slc_page.html
