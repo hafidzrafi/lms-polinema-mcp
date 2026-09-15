@@ -1,98 +1,105 @@
-# LMS Polinema MCP (`lms-polinema-mcp`)
+# LMS Polinema MCP Server (`lms-polinema-mcp`)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MCP: 2.x](https://img.shields.io/badge/MCP-2.x-green.svg)](https://modelcontextprotocol.io)
+[![OS: Cross--Platform](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-brightgreen.svg)](#cross-platform-support)
 
-Model Context Protocol (MCP) server yang memberikan AI Agents (Antigravity CLI, Claude Desktop, Cursor, VS Code) akses penuh dan real-time ke **LMS Polinema** (`lmsslc.polinema.ac.id` & `slc.polinema.ac.id/spada`).
+A high-performance Model Context Protocol (MCP) server that provides AI agents (Antigravity CLI, Claude Desktop, Cursor, VS Code) real-time access to **LMS Polinema** (`lmsslc.polinema.ac.id` & `slc.polinema.ac.id/spada`).
 
-Didesain sebagai **reference implementation** untuk sistem akademik kampus dengan autentikasi multi-tier (SIAKAD Portal ➔ SPADA ➔ LMS Moodle).
+Designed as an open-source reference implementation for university academic systems featuring multi-tier Single Sign-On (SSO) authentication.
 
 ---
 
-## 🏛️ Arsitektur Integrasi
+## Architecture Overview
 
-Kampus Polinema mengadopsi struktur multi-tier di mana autentikasi mahasiswa berpusat di SIAKAD:
+Polinema employs a multi-tier authentication chain where student accounts authenticate via the university portal (SIAKAD) rather than native Moodle accounts:
 
 ```mermaid
 flowchart LR
     A["SIAKAD Portal\n(siakad.polinema.ac.id)"] -->|"SSO Connector"| B["SPADA Gateway\n(slc.polinema.ac.id/spada)"]
     B -->|"Course Bridge"| C["LMS Moodle 3.4\n(lmsslc.polinema.ac.id)"]
-    C -->|"Sessions & HTML Parser"| D["lms-polinema-mcp\n(Python FastMCP Server)"]
-    D -->|"STDIO Transport"| E["AI Agent / Antigravity CLI / Claude"]
+    C -->|"Async HTML Scrapers"| D["lms-polinema-mcp\n(FastMCP Server)"]
+    D -->|"STDIO Transport"| E["AI Agent / Claude / Cursor / AGY"]
 ```
 
-1. **SIAKAD Portal**: Titik awal autentikasi (NIM & Password).
-2. **SPADA Gateway**: Mengelola discovery mata kuliah aktif semester berjalan.
-3. **LMS Moodle**: Menyimpan modul, jobsheet, tugas (assignments), dan sistem pengumpulan.
-4. **`lms-polinema-mcp`**: Mengorkestrasi sesi `POLIMASPADA` dan `MoodleSession` untuk menyajikan data secara terstruktur ke AI Agent.
+1. **SIAKAD Portal:** Primary identity provider (NIM & Password).
+2. **SPADA Gateway:** Discovers active enrolled semester courses.
+3. **Moodle LMS:** Hosts course modules, jobsheets, assignments, and submission deadlines.
+4. **Self-Healing Layer:** Automatically triggers headless browser re-authentication when session cookies expire, providing a zero-interruption experience for AI agents.
 
 ---
 
-## 🛠️ Daftar Tools yang Tersedia
+## Tool Reference
 
-| Tool Name | Parameter | Deskripsi |
+| Tool Name | Parameters | Description |
 |---|---|---|
-| `lms_list_courses` | - | Mengambil seluruh mata kuliah aktif semester ini beserta link dan ID LMS |
-| `lms_list_assignments` | `course_id?` (optional) | Menampilkan seluruh tugas aktif dari semua mata kuliah (atau filter per mapel) |
-| `lms_get_assignment_detail` | `assignment_id` (required) | Mengambil deskripsi lengkap tugas, lampiran file, batas waktu, dan status submission |
-| `lms_list_materials` | `course_id` (required) | Menampilkan semua slide materi, jobsheet, dan modul per pertemuan |
-| `lms_check_deadlines` | - | Merekap tugas-tugas aktif dengan deadline terdekat dan sisa waktu pengumpulan |
+| `lms_list_courses` | _(none)_ | Retrieves all enrolled courses for the active semester with LMS course IDs and URLs. |
+| `lms_list_assignments` | `course_id` _(optional int)_ | Lists active assignments across all courses or filtered by course ID. |
+| `lms_get_assignment_detail` | `assignment_id` _(required int)_ | Returns full instructions, attachment files, submission status, and deadline details. |
+| `lms_list_materials` | `course_id` _(required int)_ | Lists course slides, jobsheet documents, and lecture resources. |
+| `lms_check_deadlines` | _(none)_ | Fetches upcoming assignment deadlines across all courses in parallel. |
 
 ---
 
-## 🚀 Instalasi & Setup
+## Cross-Platform Support
 
-### 1. Prasyarat
-- Python 3.11+
-- Package manager [`uv`](https://astral.sh/uv) (disarankan) atau `pip`
+This package is **100% cross-platform** and runs natively on:
+- **macOS** (Apple Silicon & Intel)
+- **Linux** (Ubuntu, Debian, Fedora, Arch, WSL2)
+- **Windows 10 / 11** (PowerShell, Command Prompt, or WSL)
 
-### 2. Clone & Install Dependencies
+Path resolution uses Python's `pathlib.Path.home()` and file permissions are safely guarded with fallback handlers across OS platforms.
+
+---
+
+## Installation & Setup
+
+### 1. Prerequisites
+- Python 3.11 or higher
+- [`uv`](https://astral.sh/uv) (recommended) or `pip`
+
+### 2. Install Dependencies
 ```bash
 git clone https://github.com/hafidzrafi/lms-polinema-mcp.git
 cd lms-polinema-mcp
 
-# Install dependencies menggunakan uv
+# Sync dependencies and install Playwright Chromium
 uv sync
 uv run playwright install chromium
 ```
 
-### 3. Autentikasi Sesi (Sekali Saja)
-Jalankan script interaktif untuk melakukan handshake SSO:
+### 3. Interactive Authentication Setup (One-Time)
+Run the setup script to store your credentials and establish your initial session:
 ```bash
 uv run python auth.py
 ```
-Masukkan NIM dan Password SIAKAD. Browser Chromium otomatis masuk ke SIAKAD ➔ membuka menu Akademik > LMS ➔ mengklik *Connect to LMS Polinema* ➔ dan menyimpan sesi ke `~/.lms_polinema/`.
+Your credentials are encrypted/stored with restricted user-only file permissions (`0600`) at `~/.lms_polinema/credentials.json`. When sessions expire, the server re-authenticates automatically in the background.
 
 ---
 
-## ⚙️ Konfigurasi MCP Client
+## MCP Client Configuration
 
-### Antigravity CLI / AGY (`~/.gemini/config/mcp_config.json`)
+### Universal Configuration (Works across all OS platforms via `uv`)
+
 ```json
 {
   "mcpServers": {
     "lms-polinema": {
-      "command": "/Users/<username>/Projects/03_AI_Automation/mcp-servers/lms-polinema-mcp/.venv/bin/python",
-      "args": ["-m", "lms_polinema_mcp.server"]
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/lms-polinema-mcp",
+        "lms-polinema-mcp"
+      ]
     }
   }
 }
 ```
 
-### Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`)
-```json
-{
-  "mcpServers": {
-    "lms-polinema": {
-      "command": "/absolute/path/to/lms-polinema-mcp/.venv/bin/python",
-      "args": ["-m", "lms_polinema_mcp.server"]
-    }
-  }
-}
-```
+### macOS / Linux Direct Binary Configuration
 
-### Cursor (`~/.cursor/mcp.json`)
 ```json
 {
   "mcpServers": {
@@ -104,17 +111,43 @@ Masukkan NIM dan Password SIAKAD. Browser Chromium otomatis masuk ke SIAKAD ➔ 
 }
 ```
 
+### Windows Direct Binary Configuration
+
+```json
+{
+  "mcpServers": {
+    "lms-polinema": {
+      "command": "C:\\path\\to\\lms-polinema-mcp\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "lms_polinema_mcp.server"]
+    }
+  }
+}
+```
+
 ---
 
-## 💡 Adaptasi untuk Kampus Lain (Forking Guide)
+## Configuration Overrides
 
-Jika kampus kamu memiliki arsitektur serupa (Portal Kampus + Moodle LMS):
-1. Sesuaikan endpoint URL di `src/lms_polinema_mcp/config.py`:
-   - Ganti `SIAKAD_BASE_URL` dan `MOODLE_BASE_URL`
-2. Sesuaikan selector navigasi di `auth.py` sesuai alur klik portal kampus kamu.
-3. Core parsing Moodle (`LMSClient`) langsung bekerja karena struktur DOM Moodle bersifat standar.
+All settings can be customized via environment variables or a `.env` file:
+
+| Environment Variable | Default | Description |
+|---|---|---|
+| `LMS_POLINEMA_HTTP_TIMEOUT` | `20.0` | HTTP request timeout in seconds |
+| `LMS_POLINEMA_COURSE_CACHE_TTL_SECONDS` | `1800` | In-memory course listing cache lifetime (30m) |
+| `LMS_POLINEMA_SESSION_CACHE_TTL_SECONDS` | `300` | In-memory session validation check cache (5m) |
+| `LMS_POLINEMA_SIAKAD_BASE_URL` | `https://siakad.polinema.ac.id` | SIAKAD portal URL |
+| `LMS_POLINEMA_MOODLE_BASE_URL` | `https://lmsslc.polinema.ac.id` | University Moodle base URL |
 
 ---
 
-## 📄 Lisensi
+## Adapting for Other Universities (Forking Guide)
+
+1. **Update URLs:** Modify endpoints in `src/lms_polinema_mcp/config.py` or provide them via `.env`.
+2. **Update Auth Navigation:** Customize selector logic in `src/lms_polinema_mcp/auth/refresh.py` to match your university's SSO button clicks.
+3. **Moodle Scraper Reusability:** The `MoodleScraper` in `src/lms_polinema_mcp/services/moodle.py` uses standard Moodle DOM selectors (`.generaltable`, `/mod/assign/`, `#intro`), making it portable across any Moodle 3.x–4.x installation.
+
+---
+
+## License
+
 MIT License © 2026 [Hafidz Rafi Rabbani](https://github.com/hafidzrafi).
