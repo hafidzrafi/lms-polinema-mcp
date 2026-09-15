@@ -12,23 +12,7 @@ Supports **Claude Desktop**, **Cursor**, **VS Code**, **Antigravity CLI**, and a
 
 ## How It Works
 
-Polinema uses a three-tier authentication chain. Students authenticate via the SIAKAD portal rather than directly through Moodle:
-
-```
-SIAKAD  ──SSO──►  SPADA Gateway  ──course listing──►  Moodle LMS
-                                                            │
-                                                    HTML scraping
-                                                            │
-                                                            ▼
-                                                   lms-polinema-mcp
-                                                            │
-                                                          STDIO
-                                                            │
-                                                            ▼
-                                                       MCP Client
-```
-
-On first run, `auth.py` launches a headless Chromium browser to complete the SSO chain and saves the session cookies to `~/.lms_polinema/`. On subsequent calls, the server loads cookies from disk and validates them with a lightweight HTTP check. If validation fails, it re-runs the headless authentication automatically.
+Polinema does not allow students to log in to Moodle directly. Authentication goes through SIAKAD (the university portal), which issues a session for SPADA (the course gateway), which then bridges to Moodle. This server automates that chain using a headless Chromium browser on first run, saves the resulting cookies to `~/.lms_polinema/`, and reuses them on subsequent calls. If the session expires, the browser flow runs again automatically in the background.
 
 ---
 
