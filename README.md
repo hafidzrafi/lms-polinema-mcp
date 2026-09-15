@@ -117,15 +117,6 @@ See [`.env.example`](.env.example) for the full list.
 
 ---
 
-## Adapting for Other Institutions
-
-This server scrapes HTML from a standard Moodle 3.x installation. To adapt it for a different university:
-
-1. Update `SIAKAD_BASE_URL`, `SPADA_BASE_URL`, and `MOODLE_BASE_URL` in `config.py` or via `.env`.
-2. Modify `src/lms_polinema_mcp/auth/refresh.py` to match your institution's SSO login flow.
-3. The `MoodleScraper` in `src/lms_polinema_mcp/services/moodle.py` uses standard Moodle selectors (`#intro`, `.generaltable`, `/mod/assign/`) and should work on most Moodle 3.x–4.x deployments without modification.
-
----
 
 ## Known Limitations
 

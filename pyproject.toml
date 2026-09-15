@@ -1,23 +1,22 @@
 [project]
 name = "lms-polinema-mcp"
 version = "0.1.0"
-description = "MCP server for LMS Polinema — reference implementation for campus LMS integration with AI agents"
+description = "MCP server for LMS Polinema (SIAKAD + SPADA + Moodle)"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
     { name = "Hafidz Rafi Rabbani", email = "mohammadhafidzrafirabbani99@gmail.com" }
 ]
 requires-python = ">=3.11"
-keywords = ["mcp", "lms", "moodle", "ai-agent", "campus", "education", "polinema"]
+keywords = ["mcp", "lms", "moodle", "polinema", "campus"]
 
 [project.urls]
-Homepage = "https://github.com/hafidzrafi/lms-polinema-mcp"
 Repository = "https://github.com/hafidzrafi/lms-polinema-mcp"
 Issues = "https://github.com/hafidzrafi/lms-polinema-mcp/issues"
 Changelog = "https://github.com/hafidzrafi/lms-polinema-mcp/blob/main/CHANGELOG.md"
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
@@ -36,15 +35,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "respx>=0.21.0",
     "ruff>=0.4.0",
 ]
 
 [project.scripts]
 lms-polinema-mcp = "lms_polinema_mcp.server:main"
-lms-polinema-auth = "lms_polinema_mcp.auth.credentials:main"
 
 [tool.ruff]
 line-length = 100
@@ -53,9 +48,6 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
 
 [tool.uv]
 package = true
