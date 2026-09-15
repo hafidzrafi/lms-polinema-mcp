@@ -3,7 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MCP: 2.x](https://img.shields.io/badge/MCP-2.x-green.svg)](https://modelcontextprotocol.io)
-[![CI](https://github.com/hafidzrafi/lms-polinema-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/hafidzrafi/lms-polinema-mcp/actions/workflows/ci.yml)
 
 An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes LMS Polinema course data — assignments, deadlines, and materials — to AI agents via STDIO transport.
 
@@ -13,17 +12,23 @@ Supports **Claude Desktop**, **Cursor**, **VS Code**, **Antigravity CLI**, and a
 
 ## How It Works
 
-Polinema uses a three-tier authentication chain. Students authenticate via the university SIAKAD portal rather than directly through Moodle:
+Polinema uses a three-tier authentication chain. Students authenticate via the SIAKAD portal rather than directly through Moodle:
 
-```mermaid
-flowchart LR
-    A["SIAKAD\n(siakad.polinema.ac.id)"] -->|"SSO"| B["SPADA Gateway\n(slc.polinema.ac.id/spada)"]
-    B -->|"Course listing"| C["Moodle LMS\n(lmsslc.polinema.ac.id)"]
-    C -->|"HTML scraping"| D["lms-polinema-mcp"]
-    D -->|"STDIO"| E["MCP Client"]
+```
+SIAKAD  ──SSO──►  SPADA Gateway  ──course listing──►  Moodle LMS
+                                                            │
+                                                    HTML scraping
+                                                            │
+                                                            ▼
+                                                   lms-polinema-mcp
+                                                            │
+                                                          STDIO
+                                                            │
+                                                            ▼
+                                                       MCP Client
 ```
 
-On first run, `auth.py` launches a headless Chromium browser to complete the full SSO chain and saves the resulting session cookies to `~/.lms_polinema/`. On subsequent runs, the server loads cookies from disk and validates them with a lightweight HTTP check. If validation fails, the server automatically re-runs the headless authentication in the background.
+On first run, `auth.py` launches a headless Chromium browser to complete the SSO chain and saves the session cookies to `~/.lms_polinema/`. On subsequent calls, the server loads cookies from disk and validates them with a lightweight HTTP check. If validation fails, it re-runs the headless authentication automatically.
 
 ---
 
@@ -148,4 +153,4 @@ This server scrapes HTML from a standard Moodle 3.x installation. To adapt it fo
 
 ## License
 
-MIT License © 2026 [Hafidz Rafi](https://github.com/hafidzrafi)
+MIT License © 2026 [Hafidz Rafi' Rabbani](https://github.com/hafidzrafi)
