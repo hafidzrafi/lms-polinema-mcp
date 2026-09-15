@@ -9,6 +9,14 @@ authors = [
 ]
 requires-python = ">=3.11"
 keywords = ["mcp", "lms", "moodle", "polinema", "campus"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 
 [project.urls]
 Repository = "https://github.com/hafidzrafi/lms-polinema-mcp"
