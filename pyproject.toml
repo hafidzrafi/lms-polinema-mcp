@@ -1,6 +1,6 @@
 [project]
 name = "lms-polinema-mcp"
-version = "2.0.0"
+version = "0.1.0"
 description = "MCP server for LMS Polinema — reference implementation for campus LMS integration with AI agents"
 readme = "README.md"
 license = { text = "MIT" }
