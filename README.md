@@ -148,4 +148,4 @@ This server scrapes HTML from a standard Moodle 3.x installation. To adapt it fo
 
 ## License
 
-MIT License © 2026 [Hafidz Rafi Rabbani](https://github.com/hafidzrafi)
+MIT License © 2026 [Hafidz Rafi](https://github.com/hafidzrafi)
