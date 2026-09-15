@@ -1,0 +1,51 @@
+<div id="div_script_ajax_header" class="hide" style="margin:0px">
+	<script type="text/javascript">
+		// ada di admin header jg
+		var base_url                = "https://siakad.polinema.ac.id/";
+		var this_pagename           = base_url+"mahasiswa/slc"; // /index/first_load/yes
+		var pageAfterSave           = this_pagename+"/index/first_load/ok";
+		var realFileName			= "slc";
+
+		var div_mainContentBody     = "#portlet-sub-page-body";
+		var form_main_search        = $("#form_main_search");
+		var form_wrapper            = "#form-action-wrapper";
+		
+		var div_LoadDataTable 		= "#table-data-wrapper";
+		if(typeof $(div_LoadDataTable).html()=="undefined"){
+			div_LoadDataTable 		= "#table-data-wrapper-slc";
+		}
+
+		var auto_redirect           = isAutoRedirectAfterSave = true;
+		var str_dataInputDefault	= "";
+		var defaultIndexView		= "index";
+		
+		if(typeof $("#table-data-wrapper-"+realFileName)!="undefined"){
+			$("#print").attr("onclick", "printThePage(this, '#table-data-wrapper-"+realFileName+"')");
+		}
+		else if(typeof $("#table-data-wrapper")!="undefined"){
+			$("#print").attr("onclick", "printThePage(this, '#table-data-wrapper-"+realFileName+"')");
+		}
+	</script>
+</div><a class="btn btn-sm green" href="http://slc.polinema.ac.id" target="_blank">Connect to LMS Polinema</a>
+<div id="div_script_ajax_footer" class="hide" style="margin:0px">
+<script type="text/javascript">
+	$("body #portlet_caption_title").html('<i class="fa fa-comments"></i>Siakad-LMS Connector');
+	$(".page-content .page-breadcrumb > li").next().find("a").text("Akademik");
+	$(".page-content .page-breadcrumb > li").next().next().find("a").text("LMS");
+	$("#portlet_caption_title").html("Siakad-LMS Connector");
+	// console.log($(".page-content .page-breadcrumb > li").next().next().find("a").text());
+	// Metronic.initAjax();
+	Metronic.scrollTop();
+	Metronic.initUniform();
+	
+	$("select.select2me").each(function () {
+		if($(this).find("option").size()>2){
+			idObjSelect = $(this).attr("id");
+			// console.log(idObjSelect);
+			// console.log($("#s2id_"+idObjSelect).html());
+			if(typeof $("#s2id_"+idObjSelect).html()=="undefined"){
+		 		$("select#"+idObjSelect).select2();
+			}
+		}
+	});
+</script></div>

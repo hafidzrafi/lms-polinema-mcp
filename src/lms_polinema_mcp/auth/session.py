@@ -106,7 +106,11 @@ class SessionManager:
                 verify=False,
             )
             # Valid session returns 200 OK. Expired session issues a 303 redirect to login.
-            return resp.status_code == 200
+            if resp.status_code != 200:
+                return False
+            # Guard against guest sessions: Moodle can return 200 on /my/ for anonymous
+            # users but embed a login redirect link in the page body.
+            return "login/index.php" not in resp.text
         except Exception as exc:
             logger.warning("Moodle session validation network check failed: %s", exc)
             return False

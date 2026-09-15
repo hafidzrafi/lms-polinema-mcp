@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><!--<![endif]--><!-- BEGIN HEAD --><head>
+		<meta charset="utf-8">
+		<title>SIAKAD 3 | Sistem Informasi Akademik</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<!-- <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" /> -->
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
+		<meta content="width=device-width, initial-scale=1.0" name="viewport">
+		<meta content="sistem informasi akademik vokasi" name="description">
+		<meta content="fredy perdana" name="author">
+
+		<style type="text/css">
+			@font-face {font-family: 'Open Sans';font-style: normal;font-weight: 300;src: local('Open Sans Light'), local('OpenSans-Light');}
+			@font-face {font-family: 'Open Sans';font-style: normal;font-weight: 400;src: local('Open Sans'), local('OpenSans');}
+			@font-face {font-family: 'Open Sans';font-style: normal;font-weight: 600;src: local('Open Sans Semibold'), local('OpenSans-Semibold');}
+			@font-face {font-family: 'Open Sans';font-style: normal;font-weight: 700;src: local('Open Sans Bold'), local('OpenSans-Bold');}
+		</style>
+		
+		<link href="https://siakad.polinema.ac.id/assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/global/plugins/uniform/css/uniform.default.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" type="text/css">
+		<!-- END GLOBAL MANDATORY STYLES -->
+
+		<!-- BEGIN PAGE LEVEL STYLES -->
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-select/bootstrap-select.min.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/jquery-multi-select/css/multi-select.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/select2/select2.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.css">
+		<!-- END PAGE LEVEL STYLES -->
+
+		<!-- BEGIN THEME STYLES -->
+		<link href="https://siakad.polinema.ac.id/assets/global/css/components.css" id="style_components" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/global/css/plugins.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/admin/layout/css/layout.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/admin/layout/css/themes/darkblue.css" rel="stylesheet" type="text/css" id="style_color">
+		<link href="https://siakad.polinema.ac.id/assets/admin/layout/css/custom.css" rel="stylesheet" type="text/css">
+		<link href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-toastr/toastr.min.css" rel="stylesheet" type="text/css">
+		<!-- END THEME STYLES -->
+
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-select/bootstrap-select.min.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/select2/select2.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/jquery-multi-select/css/multi-select.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-wysihtml5/bootstrap-wysihtml5.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-markdown/css/bootstrap-markdown.min.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-summernote/summernote.css">
+
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-datepicker/css/datepicker3.css">
+		<link rel="stylesheet" type="text/css" href="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap-timepicker/css/bootstrap-timepicker.min.css">
+		
+		<link rel="shortcut icon" href="https://siakad.polinema.ac.id/favicon.jpg">
+		
+
+		<!--[if lt IE 9]>
+		<script src="https://siakad.polinema.ac.id/assets/global/plugins/respond.min.js"></script>
+		<script src="https://siakad.polinema.ac.id/assets/global/plugins/excanvas.min.js"></script> 
+	<![endif]-->
+	<script src="https://siakad.polinema.ac.id/assets/global/plugins/jquery.min.js" type="text/javascript"></script>
+	<script src="https://siakad.polinema.ac.id/assets/global/plugins/jquery-migrate.min.js" type="text/javascript"></script>
+	<!-- IMPORTANT! Load jquery-ui-1.10.3.custom.min.js before bootstrap.min.js to fix bootstrap tooltip conflict with jquery ui tooltip -->
+	<script src="https://siakad.polinema.ac.id/assets/global/plugins/jquery-ui/jquery-ui-1.10.3.custom.min.js" type="text/javascript"></script>
+	<script src="https://siakad.polinema.ac.id/assets/global/plugins/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/formcomponents.js"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/new/formcomponents.js"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/new/formcomponents_display.js"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/new/form_validation_input.js"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/new/form_post_input.js"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/new/combo.js"></script>
+	<script type="text/javascript" src="https://siakad.polinema.ac.id/assets/global/scripts/new/form_upload.js"></script>
+
+
+	<script type="text/javascript">
+		var base_url                = "https://siakad.polinema.ac.id/";
+			var this_pagename           = base_url+"mahasiswa/slc"; // /index/first_load/yes
+			var pageAfterSave           = this_pagename+"/index/first_load/ok";
+			var realFileName			= "slc";
+
+			var div_mainContentBody     = "#portlet-sub-page-body";
+			var form_main_search        = $("#form_main_search");
+			var form_wrapper            = "#form-action-wrapper";
+
+			var auto_redirect           = true;
+			var str_dataInputDefault	= "";
+			var defaultIndexView		= "index";
+
+			var div_LoadDataTable 		= "#table-data-wrapper";
+			if(typeof $(div_LoadDataTable).html()=="undefined"){
+				div_LoadDataTable 		= "#table-data-wrapper-slc";
+			}
+			
+			if(typeof $("#table-data-wrapper")!="undefined"){
+				$("#print").attr("onclick", "printThePage(this, '#table-data-wrapper-"+realFileName+"')");
+			}
+			else if(typeof $("#table-data-wrapper-"+realFileName)!="undefined"){
+				$("#print").attr("onclick", "printThePage(this, '#table-data-wrapper-"+realFileName+"')");
+			}
+
+			function changePasswordClick(){
+				$("#change_password").trigger("click");
+				return false;
+			}
+
+			function showMessage(elem){
+				id_val = elem.id;
+				updateMsg(id_val);
+				$("#show_message").trigger("click");
+				return false;
+			}
+
+			function updateMsg(id = '')
+			{
+				$.ajax({
+					url: base_url+"ajax/ms_mhs/updateMsg/",
+					method:"POST",
+					data:{id:id},
+					dataType:"json",
+					success:function(data)
+					{
+						console.log(data.status);
+					}
+				});
+			}
+		</script>
+	</head>
+	<body class="page-header-fixed page-quick-sidebar-over-content">
+		<div class="page-header navbar navbar-fixed-top">
+			<div class="page-header-inner">
+				<div class="page-logo">
+					<a href="index.html">
+						<img src="https://siakad.polinema.ac.id/assets/admin/layout/img/header2.png" alt="logo" class="logo-default">
+					</a>
+					<div class="menu-toggler sidebar-toggler hide">
+					</div>
+				</div>
+				<a href="javascript:;" class="menu-toggler responsive-toggler" data-toggle="collapse" data-target=".navbar-collapse">
+				</a>
+				<div class="top-menu">
+					<ul class="nav navbar-nav pull-right">
+						<li class="dropdown dropdown-extended dropdown-inbox" id="header_inbox_bar">
+							<a href="#" class="dropdown-toggle dr-msg" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+								<i class="icon-envelope-open"></i>
+								<span class="badge badge-default count"></span>
+							</a>
+							<ul class="dropdown-menu dm-msg"></ul>
+						</li>
+						<li class="dropdown dropdown-user">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+								</a></li></ul></div></div></div></body></html>
