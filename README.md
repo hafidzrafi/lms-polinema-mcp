@@ -8,13 +8,9 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that e
 
 Supports **Claude Desktop**, **Cursor**, **VS Code**, **Antigravity CLI**, and any other MCP-compatible client.
 
----
-
 ## How It Works
 
 Polinema does not allow students to log in to Moodle directly. Authentication goes through SIAKAD (the university portal), which issues a session for SPADA (the course gateway), which then bridges to Moodle. This server automates that chain using a headless Chromium browser on first run, saves the resulting cookies to `~/.lms_polinema/`, and reuses them on subsequent calls. If the session expires, the browser flow runs again automatically in the background.
-
----
 
 ## Available Tools
 
@@ -25,8 +21,6 @@ Polinema does not allow students to log in to Moodle directly. Authentication go
 | `lms_get_assignment_detail` | `assignment_id` _(int)_ | Assignment instructions, attachments, and submission status |
 | `lms_list_materials` | `course_id` _(int)_ | Slides, jobsheets, and other resources for a course |
 | `lms_check_deadlines` | — | Deadline summary across all enrolled courses |
-
----
 
 ## Installation
 
@@ -50,8 +44,6 @@ uv run python auth.py
 Credentials are saved as JSON to `~/.lms_polinema/credentials.json` with `0600` permissions (user-readable only). Session cookies are saved separately to `~/.lms_polinema/`.
 
 > **Note:** Credentials are stored as plaintext. Ensure your home directory is appropriately secured.
-
----
 
 ## MCP Client Configuration
 
@@ -99,8 +91,6 @@ Credentials are saved as JSON to `~/.lms_polinema/credentials.json` with `0600` 
 }
 ```
 
----
-
 ## Configuration
 
 Settings can be overridden via environment variables or a `.env` file in the project root:
@@ -115,16 +105,11 @@ Settings can be overridden via environment variables or a `.env` file in the pro
 
 See [`.env.example`](.env.example) for the full list.
 
----
-
-
 ## Known Limitations
 
 - **Moodle Web Services API is disabled** on this instance. All data is retrieved by scraping HTML pages.
 - **Session TTL is short** on this Moodle instance (~30 min idle). The server re-authenticates automatically, but the first tool call after expiry will take longer than usual (~10–20 seconds).
 - **SSL verification is disabled** for campus domains due to an intermediate CA not present in the default Python trust store. This is scoped only to requests targeting `lmsslc.polinema.ac.id` and `slc.polinema.ac.id`.
-
----
 
 ## License
 
