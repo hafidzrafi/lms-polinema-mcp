@@ -6,7 +6,7 @@
 
 An MCP server for LMS Polinema. Gives AI agents access to your courses, assignments, deadlines, and materials.
 
-Works with Claude Desktop, Cursor, VS Code, Antigravity CLI, or any MCP-compatible client.
+Works with Claude Code, Cursor, Antigravity, or any MCP-compatible client.
 
 ## How it works
 
