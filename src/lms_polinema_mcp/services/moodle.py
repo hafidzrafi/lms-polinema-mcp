@@ -169,12 +169,11 @@ class MoodleScraper:
         async def _fetch_course_assignments(course: Course) -> list[AssignmentSummary]:
             assert course.moodle_id is not None
             modules = await self.get_course_modules(course.moodle_id)
-            assignments: list[AssignmentSummary] = []
-            for item in modules:
-                if isinstance(item, AssignmentSummary):
-                    item.course = course.title
-                    assignments.append(item)
-            return assignments
+            return [
+                item.model_copy(update={"course": course.title})
+                for item in modules
+                if isinstance(item, AssignmentSummary)
+            ]
 
         results = await asyncio.gather(*[_fetch_course_assignments(c) for c in targets])
         all_assignments: list[AssignmentSummary] = []

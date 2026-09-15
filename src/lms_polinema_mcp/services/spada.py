@@ -36,8 +36,9 @@ class SpadaScraper:
 
         text = resp.text
 
-        # Validate that the page is an authenticated view rather than guest login
-        if "IDXPG='GES'" in text or "gsi_btn" in text and "gallery_grid_item" not in text:
+        # Validate that the page is an authenticated view rather than a guest/login page.
+        # `and` binds tighter than `or` in Python, so parentheses are required to express intent.
+        if "IDXPG='GES'" in text or ("gsi_btn" in text and "gallery_grid_item" not in text):
             raise SessionExpiredError("SPADA session is expired or unauthenticated.")
 
         soup = BeautifulSoup(text, "html.parser")

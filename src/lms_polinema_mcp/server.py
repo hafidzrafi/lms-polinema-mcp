@@ -9,7 +9,7 @@ from lms_polinema_mcp.auth.refresh import SessionRefresher
 from lms_polinema_mcp.auth.session import SessionManager
 from lms_polinema_mcp.cache import TTLCache
 from lms_polinema_mcp.config import settings
-from lms_polinema_mcp.exceptions import CredentialsNotFoundError, SessionExpiredError
+from lms_polinema_mcp.exceptions import SessionExpiredError
 from lms_polinema_mcp.models.assignment import (
     AssignmentDetail,
     AssignmentSummary,
@@ -58,7 +58,7 @@ def _get_authenticated_sessions() -> tuple[str, str]:
         spada_data = _session_manager.load_spada() or {}
         polimaspada = spada_data.get(settings.spada_cookie_name, "")
         return session["MoodleSession"], polimaspada
-    except (CredentialsNotFoundError, Exception) as exc:
+    except Exception as exc:
         raise RuntimeError(
             f"Failed to automatically refresh LMS session: {exc}. "
             "Please run 'lms-polinema-auth' to re-authenticate."
