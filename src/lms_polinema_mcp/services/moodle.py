@@ -166,9 +166,12 @@ class MoodleScraper:
         if not targets:
             return []
 
+        sem = asyncio.Semaphore(5)
+
         async def _fetch_course_assignments(course: Course) -> list[AssignmentSummary]:
             assert course.moodle_id is not None
-            modules = await self.get_course_modules(course.moodle_id)
+            async with sem:
+                modules = await self.get_course_modules(course.moodle_id)
             return [
                 item.model_copy(update={"course": course.title})
                 for item in modules
@@ -193,9 +196,12 @@ class MoodleScraper:
         if not assignments:
             return []
 
+        sem = asyncio.Semaphore(5)
+
         async def _fetch_deadline(summary: AssignmentSummary) -> DeadlineItem:
             try:
-                detail = await self.get_assignment_detail(summary.assignment_id)
+                async with sem:
+                    detail = await self.get_assignment_detail(summary.assignment_id)
                 return DeadlineItem(
                     course=summary.course,
                     title=summary.title,

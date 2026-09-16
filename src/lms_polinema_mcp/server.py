@@ -1,5 +1,6 @@
 """LMS Polinema MCP Server implementation."""
 
+import asyncio
 import logging
 
 from mcp.server.mcpserver import MCPServer
@@ -9,7 +10,11 @@ from lms_polinema_mcp.auth.refresh import SessionRefresher
 from lms_polinema_mcp.auth.session import SessionManager
 from lms_polinema_mcp.cache import TTLCache
 from lms_polinema_mcp.config import settings
-from lms_polinema_mcp.exceptions import SessionExpiredError
+from lms_polinema_mcp.exceptions import (
+    AuthenticationError,
+    CredentialsNotFoundError,
+    SessionExpiredError,
+)
 from lms_polinema_mcp.models.assignment import (
     AssignmentDetail,
     AssignmentSummary,
@@ -31,37 +36,42 @@ _refresher = SessionRefresher(_credential_store, _session_manager)
 _course_cache: TTLCache[list[Course]] = TTLCache(ttl_seconds=settings.course_cache_ttl_seconds)
 
 
-def _get_authenticated_sessions() -> tuple[str, str]:
+async def _get_authenticated_sessions(force_refresh: bool = False) -> tuple[str, str]:
     """
     Return active (moodle_session, polimaspada) cookies, performing auto-refresh if necessary.
 
     Raises:
-        RuntimeError: If authentication cannot be established or refreshed.
+        CredentialsNotFoundError: If no stored credentials exist for refresh.
+        AuthenticationError: If automated session refresh fails.
     """
-    try:
-        session = _session_manager.get_valid_session()
-        spada_data = _session_manager.load_spada() or {}
-        polimaspada = spada_data.get(settings.spada_cookie_name, "")
-        return session["MoodleSession"], polimaspada
-    except SessionExpiredError:
-        logger.info("Session expired or missing. Checking stored credentials for auto-refresh.")
+    if not force_refresh:
+        try:
+            session = _session_manager.get_valid_session()
+            spada_data = _session_manager.load_spada() or {}
+            polimaspada = spada_data.get(settings.spada_cookie_name, "")
+            if polimaspada:
+                return session["MoodleSession"], polimaspada
+        except SessionExpiredError:
+            logger.info("Session expired or missing. Checking stored credentials for auto-refresh.")
 
     if not _credential_store.exists():
-        raise RuntimeError(
+        raise CredentialsNotFoundError(
             "LMS session expired and no stored credentials found. "
-            "Please run 'lms-polinema-auth' to configure."
+            "Please run 'uv run auth.py' to configure."
         )
 
     try:
-        _refresher.refresh()
+        # Run Playwright sync flow in an unlooped worker thread to avoid blocking the event loop
+        # and prevent collision with the active asyncio event loop.
+        await asyncio.to_thread(_refresher.refresh)
         session = _session_manager.get_valid_session()
         spada_data = _session_manager.load_spada() or {}
         polimaspada = spada_data.get(settings.spada_cookie_name, "")
         return session["MoodleSession"], polimaspada
     except Exception as exc:
-        raise RuntimeError(
+        raise AuthenticationError(
             f"Failed to automatically refresh LMS session: {exc}. "
-            "Please run 'lms-polinema-auth' to re-authenticate."
+            "Please run 'uv run auth.py' to re-authenticate."
         ) from exc
 
 
@@ -72,15 +82,15 @@ async def lms_list_courses() -> list[Course]:
     if cached is not None:
         return cached
 
-    moodle_session, polimaspada = _get_authenticated_sessions()
+    _, polimaspada = await _get_authenticated_sessions()
     async with create_spada_client(polimaspada) as client:
         scraper = SpadaScraper(client)
         try:
             courses = await scraper.get_enrolled_courses()
         except SessionExpiredError:
-            # SPADA cookie expired while Moodle was valid; trigger refresh and retry once
+            # SPADA cookie expired while Moodle was valid; trigger forced refresh and retry once
             _session_manager.invalidate_cache()
-            moodle_session, polimaspada = _get_authenticated_sessions()
+            _, polimaspada = await _get_authenticated_sessions(force_refresh=True)
             async with create_spada_client(polimaspada) as retry_client:
                 retry_scraper = SpadaScraper(retry_client)
                 courses = await retry_scraper.get_enrolled_courses()
@@ -93,7 +103,7 @@ async def lms_list_courses() -> list[Course]:
 async def lms_list_assignments(course_id: int | None = None) -> list[AssignmentSummary]:
     """Return all active assignments, optionally filtered by specific course_id."""
     courses = await lms_list_courses()
-    moodle_session, _ = _get_authenticated_sessions()
+    moodle_session, _ = await _get_authenticated_sessions()
 
     async with create_moodle_client(moodle_session) as client:
         scraper = MoodleScraper(client)
@@ -103,7 +113,7 @@ async def lms_list_assignments(course_id: int | None = None) -> list[AssignmentS
 @mcp.tool()
 async def lms_get_assignment_detail(assignment_id: int) -> AssignmentDetail:
     """Return complete assignment details including instructions, attachments, and submission status."""
-    moodle_session, _ = _get_authenticated_sessions()
+    moodle_session, _ = await _get_authenticated_sessions()
     async with create_moodle_client(moodle_session) as client:
         scraper = MoodleScraper(client)
         return await scraper.get_assignment_detail(assignment_id)
@@ -112,7 +122,7 @@ async def lms_get_assignment_detail(assignment_id: int) -> AssignmentDetail:
 @mcp.tool()
 async def lms_list_materials(course_id: int) -> list[CourseMaterial]:
     """Return all educational material items (slides, documents, folders) for a specific course."""
-    moodle_session, _ = _get_authenticated_sessions()
+    moodle_session, _ = await _get_authenticated_sessions()
     async with create_moodle_client(moodle_session) as client:
         scraper = MoodleScraper(client)
         modules = await scraper.get_course_modules(course_id)
@@ -123,7 +133,7 @@ async def lms_list_materials(course_id: int) -> list[CourseMaterial]:
 async def lms_check_deadlines() -> list[DeadlineItem]:
     """Return deadline summary for all active assignments across all enrolled courses."""
     courses = await lms_list_courses()
-    moodle_session, _ = _get_authenticated_sessions()
+    moodle_session, _ = await _get_authenticated_sessions()
 
     async with create_moodle_client(moodle_session) as client:
         scraper = MoodleScraper(client)
