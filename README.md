@@ -16,11 +16,11 @@ Polinema does not let students log into Moodle directly. The auth chain goes: SI
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `lms_list_courses` | — | Enrolled courses for the current semester |
+| `lms_list_courses` | - | Enrolled courses for the current semester |
 | `lms_list_assignments` | `course_id` (int, optional) | Assignments, optionally filtered by course |
 | `lms_get_assignment_detail` | `assignment_id` (int) | Instructions, attachments, submission status |
 | `lms_list_materials` | `course_id` (int) | Slides, jobsheets, and other course files |
-| `lms_check_deadlines` | — | Deadline summary across all courses |
+| `lms_check_deadlines` | - | Deadline summary across all courses |
 
 ## Installation
 
@@ -36,7 +36,7 @@ uv run playwright install chromium
 Run once to set up credentials:
 
 ```bash
-uv run python auth.py
+uv run auth.py
 ```
 
 Credentials are stored as plaintext JSON at `~/.lms_polinema/credentials.json` (`0600` permissions).

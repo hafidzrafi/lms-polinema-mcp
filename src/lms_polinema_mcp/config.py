@@ -14,7 +14,6 @@ class Settings(BaseSettings):
 
     # SIAKAD authentication portal
     siakad_base_url: str = "https://siakad.polinema.ac.id"
-    siakad_lms_path: str = "/mahasiswa/slc/index/gm/akademik"
 
     # SPADA course discovery portal
     spada_base_url: str = "https://slc.polinema.ac.id/spada"
@@ -32,7 +31,8 @@ class Settings(BaseSettings):
 
     # HTTP client configuration
     http_timeout: float = 20.0
-    http_verify_ssl: bool = True
+    # SSL verification is False by default: Polinema servers lack intermediate CA in macOS cert store
+    http_verify_ssl: bool = False
 
     # Cache TTL settings
     course_cache_ttl_seconds: int = 1800  # 30 minutes

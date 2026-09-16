@@ -18,12 +18,12 @@ build/
 # uv
 .python-version
 
-# Environment files — never commit real credentials
+# Environment files: never commit real credentials
 .env
 .env.local
 .env.*.local
 
-# Session and credential files — SECURITY: these contain live auth cookies
+# Session and credential files (SECURITY: these contain live auth cookies)
 moodle_session.json
 spada_session.json
 credentials.json
