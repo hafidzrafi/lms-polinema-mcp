@@ -1,5 +1,6 @@
 """Session management module with validation and in-memory caching."""
 
+import contextlib
 import json
 import logging
 import os
@@ -27,12 +28,22 @@ class SessionManager:
 
     def __init__(self) -> None:
         settings.session_dir.mkdir(parents=True, exist_ok=True)
+        with contextlib.suppress(OSError):
+            os.chmod(settings.session_dir, 0o700)
         self._lock = threading.Lock()
         self._cached_session: SessionData | None = None
         self._cache_timestamp: float = 0.0
 
+    @staticmethod
+    def _secure_write_json(file_path: os.PathLike[str] | str, data: dict) -> None:
+        """Write JSON data to disk atomically with restricted 0o600 file permissions."""
+        flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+        fd = os.open(file_path, flags, 0o600)
+        with open(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2))
+
     def save_moodle(self, moodle_session: str) -> None:
-        """Persist Moodle session cookie to disk with 0o600 permissions."""
+        """Persist Moodle session cookie to disk atomically with 0o600 permissions."""
         if not settings.moodle_session_file:
             return
 
@@ -40,18 +51,14 @@ class SessionManager:
             settings.moodle_cookie_name: moodle_session,
             "saved_at": time.time(),
         }
-        settings.moodle_session_file.write_text(json.dumps(data, indent=2))
-        try:
-            os.chmod(settings.moodle_session_file, 0o600)
-        except OSError as exc:
-            logger.warning("Failed to set 0600 file permissions: %s", exc)
+        self._secure_write_json(settings.moodle_session_file, data)
 
         with self._lock:
             self._cached_session = {"MoodleSession": moodle_session, "saved_at": data["saved_at"]}
             self._cache_timestamp = time.time()
 
     def save_spada(self, polimaspada: str) -> None:
-        """Persist SPADA portal session cookie to disk with 0o600 permissions."""
+        """Persist SPADA portal session cookie to disk atomically with 0o600 permissions."""
         if not settings.spada_session_file:
             return
 
@@ -59,11 +66,7 @@ class SessionManager:
             settings.spada_cookie_name: polimaspada,
             "saved_at": time.time(),
         }
-        settings.spada_session_file.write_text(json.dumps(data, indent=2))
-        try:
-            os.chmod(settings.spada_session_file, 0o600)
-        except OSError as exc:
-            logger.warning("Failed to set 0600 file permissions: %s", exc)
+        self._secure_write_json(settings.spada_session_file, data)
 
     def load_moodle(self) -> SessionData | None:
         """Read Moodle session from disk or return None if missing."""
@@ -103,7 +106,7 @@ class SessionManager:
                 cookies={settings.moodle_cookie_name: moodle_session},
                 follow_redirects=False,
                 timeout=10.0,
-                verify=False,
+                verify=settings.http_verify_ssl,
             )
             # Valid session returns 200 OK. Expired session issues a 303 redirect to login.
             if resp.status_code != 200:

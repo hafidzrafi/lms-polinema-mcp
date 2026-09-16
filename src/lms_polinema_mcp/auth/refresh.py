@@ -75,7 +75,7 @@ class SessionRefresher:
                 try:
                     spada_page = context.new_page()
                     spada_page.goto(
-                        "http://slc.polinema.ac.id", wait_until="networkidle", timeout=25_000
+                        "https://slc.polinema.ac.id", wait_until="networkidle", timeout=25_000
                     )
                     logger.info("SPADA portal connected: %s", spada_page.title())
                 except Exception as exc:
