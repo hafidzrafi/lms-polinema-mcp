@@ -4,37 +4,29 @@
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MCP: 2.x](https://img.shields.io/badge/MCP-2.x-green.svg)](https://modelcontextprotocol.io)
 
-Model Context Protocol (MCP) server for LMS Polinema. Gives AI agents direct access to your enrolled courses, assignments, deadlines, and materials.
+An MCP server for LMS Polinema. Gives AI agents access to your courses, assignments, deadlines, and materials.
 
-Compatible with Claude Code, Cursor, Antigravity, and any client implementing the Model Context Protocol.
+Works with Claude Code, Cursor, Antigravity, or any MCP-compatible client.
 
-## How It Works
+## How it works
 
-Polinema does not allow students to log in directly to Moodle with credentials. Instead, authentication flows through an institutional single sign-on (SSO) gateway:
+Polinema does not allow direct Moodle logins with student credentials. Authentication flows through an institutional single sign-on chain: SIAKAD (academic portal) → SLC (SPADA gateway) → LMSSLC (Moodle).
 
-```
-SIAKAD (Portal) ──> SLC (SPADA Gateway) ──> LMSSLC (Moodle)
-```
+On first run, `auth.py` drives headless Chromium to authenticate via SIAKAD (NIM and password), exchanges tokens through SLC, and captures the authenticated `MoodleSession`. Session cookies are saved to `~/.lms_polinema/`. When a session expires, the server re-authenticates automatically in the background.
 
-1. On initial setup, `auth.py` drives headless Chromium to authenticate against SIAKAD using your NIM and password.
-2. The browser obtains the wildcard SSO session cookie and connects to the SPADA gateway.
-3. The SPADA gateway initiates the handshake with Moodle, issuing an authenticated `MoodleSession`.
-4. Cookies are persisted locally in `~/.lms_polinema/` with strict file permissions (`0600`).
-5. When cookies expire, the server automatically executes headless re-authentication in the background.
+## Tools
 
-## Available Tools
-
-| Tool | Parameters | Description |
+| Tool | Parameters | Returns |
 |---|---|---|
-| `lms_list_courses` | None | Lists all courses enrolled for the active semester. |
-| `lms_list_assignments` | `course_id` (int, optional) | Lists assignments across all courses or filtered by course ID. |
-| `lms_get_assignment_detail` | `assignment_id` (int) | Retrieves instructions, attachments, and submission status for an assignment. |
-| `lms_list_materials` | `course_id` (int) | Lists files, slides, jobsheets, and learning resources for a course. |
-| `lms_check_deadlines` | None | Returns active assignment deadlines and overdue items across all courses. |
+| `lms_list_courses` | - | Enrolled courses for the current semester |
+| `lms_list_assignments` | `course_id` (int, optional) | Assignments, optionally filtered by course |
+| `lms_get_assignment_detail` | `assignment_id` (int) | Instructions, attachments, submission status |
+| `lms_list_materials` | `course_id` (int) | Slides, jobsheets, and other course files |
+| `lms_check_deadlines` | - | Deadline summary across all courses |
 
 ## Installation
 
-Requirements: Python 3.11+ and [uv](https://astral.sh/uv).
+Requires Python 3.11+ and [uv](https://astral.sh/uv).
 
 ```bash
 git clone https://github.com/hafidzrafi/lms-polinema-mcp.git
@@ -43,52 +35,54 @@ uv sync
 uv run playwright install chromium
 ```
 
-Run the credential setup once:
+Run once to set up credentials:
 
 ```bash
 uv run auth.py
 ```
 
-Credentials are saved locally at `~/.lms_polinema/credentials.json` with user-only read/write permissions (`0600`).
+Credentials are stored as plaintext JSON at `~/.lms_polinema/credentials.json` (`0600` permissions).
 
-## Client Configuration
+## Configuration
 
-Add `lms-polinema` to your MCP client configuration (`mcp_config.json` or `claude_desktop_config.json`):
+Add to your MCP client config:
 
 ```json
 {
   "mcpServers": {
     "lms-polinema": {
       "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/absolute/path/to/lms-polinema-mcp",
-        "lms-polinema-mcp"
-      ]
+      "args": ["run", "--directory", "/path/to/lms-polinema-mcp", "lms-polinema-mcp"]
     }
   }
 }
 ```
 
-Alternatively, invoke the virtual environment python binary directly:
+Or use the virtualenv directly:
 
-```json
-{
-  "mcpServers": {
-    "lms-polinema": {
-      "command": "/absolute/path/to/lms-polinema-mcp/.venv/bin/python",
-      "args": ["-m", "lms_polinema_mcp.server"]
-    }
-  }
-}
-```
+**macOS / Linux:** `.venv/bin/python -m lms_polinema_mcp.server`
 
-## Notes
+**Windows:** `.venv\Scripts\python.exe -m lms_polinema_mcp.server`
 
-- **Unlinked Courses:** Courses in SPADA that do not have an active Moodle link set by the lecturer will return `moodle_id: null`.
-- **SSL Certificates:** Institutional endpoints (`slc.polinema.ac.id`, `lmsslc.polinema.ac.id`) lack intermediate CA chains in standard certificate stores; TLS validation for these internal hosts is handled accordingly in configuration.
+Settings can be overridden via environment variables or a `.env` file:
+
+| Variable | Default | Description |
+|---|---|---|
+| `LMS_POLINEMA_HTTP_TIMEOUT` | `20.0` | Request timeout (seconds) |
+| `LMS_POLINEMA_COURSE_CACHE_TTL_SECONDS` | `1800` | Course list cache lifetime |
+| `LMS_POLINEMA_SESSION_CACHE_TTL_SECONDS` | `300` | Session validation cache lifetime |
+| `LMS_POLINEMA_SIAKAD_BASE_URL` | `https://siakad.polinema.ac.id` | SIAKAD portal URL |
+| `LMS_POLINEMA_MOODLE_BASE_URL` | `https://lmsslc.polinema.ac.id` | Moodle URL |
+
+See [`.env.example`](.env.example) for the full list.
+
+## Known limitations
+
+- All data is retrieved by scraping HTML. The Moodle Web Services API is disabled on this instance.
+- Courses without an active Moodle link configured by the lecturer will return `moodle_id: null`.
+- Sessions expire after ~30 min idle. Re-auth happens automatically in the background.
+- SSL verification is disabled for `lmsslc.polinema.ac.id` and `slc.polinema.ac.id` due to a missing intermediate CA.
 
 ## License
 
-MIT
+MIT License - Hafidz Rafi' Rabbani
