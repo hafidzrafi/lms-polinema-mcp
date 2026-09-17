@@ -84,9 +84,8 @@ Alternatively, invoke the virtual environment python binary directly:
 }
 ```
 
-## Troubleshooting & Network Notes
+## Notes
 
-- **Campus Wi-Fi & Tailscale/VPN:** When connected to the Polinema campus Wi-Fi network, disable Tailscale or VPN before running authentication. The campus network enforces internal DNS mappings (`10.10.92.x`), and external VPN resolvers can lead to connection timeouts due to lack of NAT loopback.
 - **Unlinked Courses:** Courses in SPADA that do not have an active Moodle link set by the lecturer will return `moodle_id: null`.
 - **SSL Certificates:** Institutional endpoints (`slc.polinema.ac.id`, `lmsslc.polinema.ac.id`) lack intermediate CA chains in standard certificate stores; TLS validation for these internal hosts is handled accordingly in configuration.
 

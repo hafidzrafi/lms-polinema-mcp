@@ -64,7 +64,9 @@ class SessionRefresher:
                 except PlaywrightTimeout as exc:
                     alert_text = ""
                     with contextlib.suppress(Exception):
-                        alert_text = page.locator("#alert-login").inner_text(timeout=2000)
+                        alert_elem = page.locator("#alert-login")
+                        if alert_elem.is_visible():
+                            alert_text = alert_elem.inner_text(timeout=2000).strip()
                     msg = (
                         f"SIAKAD login failed: {alert_text}"
                         if alert_text
