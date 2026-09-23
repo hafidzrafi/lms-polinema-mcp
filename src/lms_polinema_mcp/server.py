@@ -1,6 +1,5 @@
 """LMS Polinema MCP Server implementation."""
 
-import asyncio
 import logging
 
 from mcp.server.mcpserver import MCPServer
@@ -61,13 +60,8 @@ async def _get_authenticated_sessions(force_refresh: bool = False) -> tuple[str,
         )
 
     try:
-        # Run Playwright sync flow in an unlooped worker thread to avoid blocking the event loop
-        # and prevent collision with the active asyncio event loop.
-        await asyncio.to_thread(_refresher.refresh)
-        session = _session_manager.get_valid_session()
-        spada_data = _session_manager.load_spada() or {}
-        polimaspada = spada_data.get(settings.spada_cookie_name, "")
-        return session["MoodleSession"], polimaspada
+        moodle_session, polimaspada = await _refresher.refresh_async()
+        return moodle_session, polimaspada
     except Exception as exc:
         raise AuthenticationError(
             f"Failed to automatically refresh LMS session: {exc}. "

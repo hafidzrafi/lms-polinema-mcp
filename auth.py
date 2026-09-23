@@ -41,7 +41,7 @@ def main() -> None:
 
     store.save(nim, password)
     print("Credentials stored successfully.")
-    print("Starting automated authentication via headless browser...")
+    print("Starting automated authentication via pure HTTP client...")
 
     refresher = SessionRefresher(store, session_mgr)
     try:
