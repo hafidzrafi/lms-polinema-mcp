@@ -135,12 +135,12 @@ async def test_refresh_async_invalid_credentials(mock_credential_store, mock_ses
 
 @pytest.mark.asyncio
 async def test_refresh_async_non_json_response(mock_credential_store, mock_session_manager):
-    """When server returns HTML error page instead of JSON, raises AuthenticationError."""
+    """When server returns HTML page with status 200 instead of JSON, raises AuthenticationError."""
     refresher = SessionRefresher(mock_credential_store, mock_session_manager)
 
     mock_client = AsyncMock()
     resp_get = MagicMock(spec=httpx.Response, status_code=200)
-    resp_post = MagicMock(spec=httpx.Response, status_code=500, text="<html>500 Server Error</html>")
+    resp_post = MagicMock(spec=httpx.Response, status_code=200, text="<html>Maintenance Page</html>")
     resp_post.json.side_effect = ValueError("Invalid JSON")
 
     mock_client.get.return_value = resp_get
@@ -148,7 +148,32 @@ async def test_refresh_async_non_json_response(mock_credential_store, mock_sessi
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         mock_client.__aenter__.return_value = mock_client
-        with pytest.raises(AuthenticationError, match="non-JSON response"):
+        with pytest.raises(AuthenticationError, match=r"non-JSON response \(status 200\)"):
+            await refresher.refresh_async()
+
+
+@pytest.mark.asyncio
+async def test_refresh_async_http_status_error(mock_credential_store, mock_session_manager):
+    """When server returns HTTP 500 on login POST, catches HTTPStatusError specifically."""
+    refresher = SessionRefresher(mock_credential_store, mock_session_manager)
+
+    mock_client = AsyncMock()
+    resp_get = MagicMock(spec=httpx.Response, status_code=200)
+
+    mock_err_resp = MagicMock(spec=httpx.Response, status_code=500)
+    resp_post = MagicMock(spec=httpx.Response, status_code=500)
+    resp_post.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "500 Internal Server Error",
+        request=MagicMock(spec=httpx.Request),
+        response=mock_err_resp,
+    )
+
+    mock_client.get.return_value = resp_get
+    mock_client.post.return_value = resp_post
+
+    with patch("httpx.AsyncClient", return_value=mock_client):
+        mock_client.__aenter__.return_value = mock_client
+        with pytest.raises(AuthenticationError, match="SIAKAD login POST returned HTTP 500"):
             await refresher.refresh_async()
 
 
@@ -186,6 +211,29 @@ async def test_refresh_async_missing_spada_cookie(mock_credential_store, mock_se
     with patch("httpx.AsyncClient", return_value=mock_client):
         mock_client.__aenter__.return_value = mock_client
         with pytest.raises(AuthenticationError, match="did not issue POLIMASPADA"):
+            await refresher.refresh_async()
+
+
+@pytest.mark.asyncio
+async def test_refresh_async_missing_moodle_cookie(mock_credential_store, mock_session_manager):
+    refresher = SessionRefresher(mock_credential_store, mock_session_manager)
+
+    mock_client = AsyncMock()
+    resp_get_login = MagicMock(spec=httpx.Response, status_code=200)
+    resp_post_login = MagicMock(spec=httpx.Response, status_code=200)
+    resp_post_login.json.return_value = {"output": "ok"}
+    resp_slc = MagicMock(spec=httpx.Response, status_code=200)
+    resp_spada = MagicMock(spec=httpx.Response, status_code=200, text="<html></html>")
+    resp_bridge = MagicMock(spec=httpx.Response, status_code=200)
+
+    mock_client.get.side_effect = [resp_get_login, resp_slc, resp_spada, resp_bridge]
+    mock_client.post.return_value = resp_post_login
+    # Has POLIMASPADA but missing MoodleSession
+    mock_client.cookies = {"polinema_sso": "token", "POLIMASPADA": "spada_val"}
+
+    with patch("httpx.AsyncClient", return_value=mock_client):
+        mock_client.__aenter__.return_value = mock_client
+        with pytest.raises(AuthenticationError, match="did not issue MoodleSession"):
             await refresher.refresh_async()
 
 
