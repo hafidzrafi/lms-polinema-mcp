@@ -62,9 +62,14 @@ async def _get_authenticated_sessions(force_refresh: bool = False) -> tuple[str,
     try:
         moodle_session, polimaspada = await _refresher.refresh_async()
         return moodle_session, polimaspada
-    except Exception as exc:
+    except AuthenticationError as exc:
         raise AuthenticationError(
             f"Failed to automatically refresh LMS session: {exc}. "
+            "Please run 'uv run auth.py' to re-authenticate."
+        ) from exc
+    except Exception as exc:
+        raise AuthenticationError(
+            f"Unexpected error refreshing LMS session: {exc}. "
             "Please run 'uv run auth.py' to re-authenticate."
         ) from exc
 

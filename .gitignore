@@ -49,3 +49,6 @@ htmlcov/
 # Temporary debug files
 ajax_slc.html
 slc_page.html
+
+# Internal planning and roadmap documents
+docs/

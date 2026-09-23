@@ -31,7 +31,7 @@ class SpadaScraper:
         try:
             resp = await self.client.get(url)
             resp.raise_for_status()
-        except Exception as exc:
+        except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             raise ParseError(f"Failed to fetch SPADA course page: {exc}") from exc
 
         text = resp.text

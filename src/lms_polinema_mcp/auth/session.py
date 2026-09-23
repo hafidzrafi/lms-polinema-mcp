@@ -78,7 +78,7 @@ class SessionManager:
             if not cookie:
                 return None
             return {"MoodleSession": cookie, "saved_at": raw.get("saved_at", 0.0)}
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, KeyError) as exc:
             logger.debug("Failed to read Moodle session file: %s", exc)
             return None
 
@@ -88,7 +88,7 @@ class SessionManager:
             return None
         try:
             return json.loads(settings.spada_session_file.read_text())
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError) as exc:
             logger.debug("Failed to read SPADA session file: %s", exc)
             return None
 
@@ -114,7 +114,7 @@ class SessionManager:
             # Guard against guest sessions: Moodle can return 200 on /my/ for anonymous
             # users but embed a login redirect link in the page body.
             return "login/index.php" not in resp.text
-        except Exception as exc:
+        except httpx.HTTPError as exc:
             logger.warning("Moodle session validation network check failed: %s", exc)
             return False
 

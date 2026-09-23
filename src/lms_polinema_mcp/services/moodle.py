@@ -46,7 +46,7 @@ class MoodleScraper:
         try:
             resp = await self.client.get(url)
             resp.raise_for_status()
-        except Exception as exc:
+        except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             logger.warning("Failed to fetch course modules for course %d: %s", course_id, exc)
             return []
 
@@ -99,7 +99,7 @@ class MoodleScraper:
         try:
             resp = await self.client.get(url)
             resp.raise_for_status()
-        except Exception as exc:
+        except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             raise ParseError(f"Failed to fetch assignment page {assignment_id}: {exc}") from exc
 
         soup = BeautifulSoup(resp.text, "html.parser")
@@ -210,7 +210,7 @@ class MoodleScraper:
                     submission_status=detail.submission_status,
                     url=summary.url,
                 )
-            except Exception as exc:
+            except ParseError as exc:
                 logger.warning(
                     "Failed to fetch detail for deadline %d: %s", summary.assignment_id, exc
                 )

@@ -41,7 +41,7 @@ class CredentialStore:
         try:
             data = json.loads(settings.credentials_file.read_text())
             return data["nim"], data["password"]
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, KeyError) as exc:
             raise CredentialsNotFoundError(f"Failed to read credentials: {exc}") from exc
 
     def exists(self) -> bool:
