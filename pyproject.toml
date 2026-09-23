@@ -34,6 +34,8 @@ Changelog = "https://github.com/hafidzrafi/lms-polinema-mcp/blob/main/CHANGELOG.
 
 [project.optional-dependencies]
 dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
     "ruff>=0.4.0",
 ]
 
