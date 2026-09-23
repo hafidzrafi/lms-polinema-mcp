@@ -12,7 +12,7 @@ Works with Claude Code, Cursor, Antigravity, or any MCP-compatible client.
 
 Polinema does not allow direct Moodle logins with student credentials. Authentication flows through an institutional single sign-on chain: SIAKAD (academic portal) → SLC (SPADA gateway) → LMSSLC (Moodle).
 
-On first run, `auth.py` drives headless Chromium to authenticate via SIAKAD (NIM and password), exchanges tokens through SLC, and captures the authenticated `MoodleSession`. Session cookies are saved to `~/.lms_polinema/`. When a session expires, the server re-authenticates automatically in the background.
+On first run, `auth.py` authenticates via SIAKAD (NIM and password) using HTTP requests (`httpx`), exchanges tokens through SLC, and captures the authenticated `MoodleSession`. Session cookies are saved to `~/.lms_polinema/`. When a session expires, the server re-authenticates automatically in the background without requiring browser binaries.
 
 ## Tools
 
@@ -21,7 +21,7 @@ On first run, `auth.py` drives headless Chromium to authenticate via SIAKAD (NIM
 | `lms_list_courses` | - | Enrolled courses for the current semester |
 | `lms_list_assignments` | `course_id` (int, optional) | Assignments, optionally filtered by course |
 | `lms_get_assignment_detail` | `assignment_id` (int) | Instructions, attachments, submission status |
-| `lms_list_materials` | `course_id` (int) | Slides, jobsheets, and other course files |
+| `lms_list_materials` | `course_id` (int) | Material links and metadata (slides, jobsheets, folders) |
 | `lms_check_deadlines` | - | Deadline summary across all courses |
 
 ## Installation
@@ -32,7 +32,6 @@ Requires Python 3.11+ and [uv](https://astral.sh/uv).
 git clone https://github.com/hafidzrafi/lms-polinema-mcp.git
 cd lms-polinema-mcp
 uv sync
-uv run playwright install chromium
 ```
 
 Run once to set up credentials:
@@ -77,11 +76,16 @@ Settings can be overridden via environment variables or a `.env` file:
 See [`.env.example`](.env.example) for the full list.
 
 ## Known limitations
-
+ 
 - All data is retrieved by scraping HTML. The Moodle Web Services API is disabled on this instance.
+- All operations are currently read-only; assignment submission is not supported.
+- `lms_list_materials` returns resource links and metadata, not downloaded file contents.
 - Courses without an active Moodle link configured by the lecturer will return `moodle_id: null`.
 - Sessions expire after ~30 min idle. Re-auth happens automatically in the background.
 - SSL verification is disabled for `lmsslc.polinema.ac.id` and `slc.polinema.ac.id` due to a missing intermediate CA.
+
+## Disclaimer
+This project is an independent open-source utility for academic productivity and is not officially affiliated with or endorsed by State Polytechnic of Malang (Polinema).
 
 ## License
 
