@@ -1,6 +1,7 @@
 """Pure HTTP automated session refresher for SIAKAD, SPADA, and Moodle."""
 
 import asyncio
+import json
 import logging
 
 import httpx
@@ -13,8 +14,14 @@ from lms_polinema_mcp.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
+# SIAKAD reverse proxy returns 404 HTML if a non-browser User-Agent is presented.
+# A standard cross-platform desktop browser header ensures compatibility across macOS, Linux, and Windows.
 _DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/128.0.0.0 Safari/537.36"
+    ),
     "Accept": "application/json, text/javascript, */*; q=0.01",
     "X-Requested-With": "XMLHttpRequest",
 }
@@ -51,9 +58,16 @@ class SessionRefresher:
             # Step 1: Visit login page to initialize cookies
             login_url = f"{settings.siakad_base_url}/login"
             try:
-                await client.get(login_url)
-            except Exception as exc:
-                raise AuthenticationError(f"Failed to reach SIAKAD login page: {exc}") from exc
+                r_get = await client.get(login_url)
+                r_get.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise AuthenticationError(
+                    f"SIAKAD login page returned HTTP {exc.response.status_code}."
+                ) from exc
+            except httpx.RequestError as exc:
+                raise AuthenticationError(
+                    f"Failed to reach SIAKAD login page: {exc}"
+                ) from exc
 
             # Step 2: POST login form
             post_headers = {
@@ -67,10 +81,21 @@ class SessionRefresher:
                     headers=post_headers,
                 )
                 r_post.raise_for_status()
-                data = r_post.json()
-            except Exception as exc:
+            except httpx.HTTPStatusError as exc:
                 raise AuthenticationError(
-                    f"Unexpected error during SIAKAD login POST: {exc}"
+                    f"SIAKAD login POST returned HTTP {exc.response.status_code}."
+                ) from exc
+            except httpx.RequestError as exc:
+                raise AuthenticationError(
+                    f"Network error during SIAKAD login POST: {exc}"
+                ) from exc
+
+            try:
+                data = r_post.json()
+            except (json.JSONDecodeError, ValueError) as exc:
+                raise AuthenticationError(
+                    f"SIAKAD portal returned non-JSON response (status {r_post.status_code}). "
+                    "Portal may be undergoing maintenance."
                 ) from exc
 
             output_status = data.get("output")
@@ -86,8 +111,14 @@ class SessionRefresher:
             try:
                 r_slc = await client.get("http://slc.polinema.ac.id", cookies=slc_cookies)
                 r_slc.raise_for_status()
-            except Exception as exc:
-                raise AuthenticationError(f"Failed to connect to SPADA gateway: {exc}") from exc
+            except httpx.HTTPStatusError as exc:
+                raise AuthenticationError(
+                    f"SPADA gateway returned HTTP {exc.response.status_code}."
+                ) from exc
+            except httpx.RequestError as exc:
+                raise AuthenticationError(
+                    f"Failed to connect to SPADA gateway: {exc}"
+                ) from exc
 
             polimaspada = client.cookies.get(settings.spada_cookie_name, "")
             if not polimaspada:
@@ -98,8 +129,14 @@ class SessionRefresher:
             try:
                 r_spada = await client.get(spada_courses_url)
                 r_spada.raise_for_status()
-            except Exception as exc:
-                raise AuthenticationError(f"Failed to fetch SPADA course page: {exc}") from exc
+            except httpx.HTTPStatusError as exc:
+                raise AuthenticationError(
+                    f"SPADA course page returned HTTP {exc.response.status_code}."
+                ) from exc
+            except httpx.RequestError as exc:
+                raise AuthenticationError(
+                    f"Failed to fetch SPADA course page: {exc}"
+                ) from exc
 
             soup = BeautifulSoup(r_spada.text, "html.parser")
             bridge_url = None
@@ -117,8 +154,14 @@ class SessionRefresher:
             try:
                 r_bridge = await client.get(bridge_url)
                 r_bridge.raise_for_status()
-            except Exception as exc:
-                raise AuthenticationError(f"Failed to establish Moodle session: {exc}") from exc
+            except httpx.HTTPStatusError as exc:
+                raise AuthenticationError(
+                    f"Moodle bridge returned HTTP {exc.response.status_code}."
+                ) from exc
+            except httpx.RequestError as exc:
+                raise AuthenticationError(
+                    f"Failed to establish Moodle session: {exc}"
+                ) from exc
 
             moodle_session = client.cookies.get(settings.moodle_cookie_name, "")
             if not moodle_session:
