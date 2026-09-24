@@ -109,7 +109,7 @@ class SessionRefresher:
             # Step 3: Access SLC gateway to establish POLIMASPADA
             slc_cookies = {"polinema_sso": polinema_sso} if polinema_sso else None
             try:
-                r_slc = await client.get("http://slc.polinema.ac.id", cookies=slc_cookies)
+                r_slc = await client.get("https://slc.polinema.ac.id", cookies=slc_cookies)
                 r_slc.raise_for_status()
             except httpx.HTTPStatusError as exc:
                 raise AuthenticationError(

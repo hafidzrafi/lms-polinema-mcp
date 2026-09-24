@@ -40,7 +40,7 @@ async def test_refresh_async_success(mock_credential_store, mock_session_manager
 
     # 3. GET SLC
     resp_slc = MagicMock(
-        spec=httpx.Response, status_code=200, url="http://slc.polinema.ac.id/spada/"
+        spec=httpx.Response, status_code=200, url="https://slc.polinema.ac.id/spada/"
     )
 
     # 4. GET SPADA matakuliah
@@ -74,6 +74,7 @@ async def test_refresh_async_success(mock_credential_store, mock_session_manager
     mock_session_manager.save_moodle.assert_called_once_with("moodle_token_789")
     mock_session_manager.save_spada.assert_called_once_with("spada_token_456")
     mock_session_manager.invalidate_cache.assert_called_once()
+    assert mock_client.get.call_args_list[1][0][0] == "https://slc.polinema.ac.id"
     assert mock_client.get.call_args_list[3][0][0] == "https://lmsslc.polinema.ac.id/course/view.php?id=13430"
 
 
