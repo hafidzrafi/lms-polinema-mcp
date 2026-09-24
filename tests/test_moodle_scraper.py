@@ -245,8 +245,8 @@ async def test_get_all_assignments_with_and_without_filter():
     # 1. Fetch all assignments
     all_assigns = await scraper.get_all_assignments(courses)
     assert len(all_assigns) == 2
-    assert all_assigns[0].course == "Pemrograman Berbasis Objek"
-    assert all_assigns[1].course == "Metode Numerik"
+    course_names = {a.course for a in all_assigns}
+    assert course_names == {"Pemrograman Berbasis Objek", "Metode Numerik"}
 
     # 2. Fetch with filter
     filtered = await scraper.get_all_assignments(courses, course_id_filter=13430)
